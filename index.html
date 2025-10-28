@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday 🎉</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans',sans-serif;background:linear-gradient(135deg,#ffefba,#ffffff);display:flex;align-items:center;justify-content:center}
+    .card{width:95%;max-width:760px;background:rgba(255,255,255,0.95);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:28px;text-align:center;position:relative;overflow:hidden}
+    h1{margin:6px 0;font-size:2.2rem}
+    p{color:#333;margin:6px 0 18px}
+    .cake{max-width:260px;width:60%;border-radius:12px;display:block;margin:14px auto}
+    .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+    .btn{padding:10px 16px;border-radius:10px;background:#ff7ab6;color:white;text-decoration:none;font-weight:600;box-shadow:0 6px 18px rgba(255,122,182,0.25)}
+    .small{font-size:0.9rem;color:#666;margin-top:12px}
+    #confetti-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    .content{position:relative;z-index:2}
+    footer{font-size:0.8rem;color:#888;margin-top:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <canvas id="confetti-canvas"></canvas>
+    <div class="content">
+      <h1>Happy Birthday 🎉</h1>
+      <p id="message">Aapko janmadin ki bahut-bahut shubhkamnayein! 🎂💕</p>
+
+      <img id="cake" class="cake" src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1080&auto=format&fit=crop&crop=faces" alt="Birthday Cake"/>
+
+      <div class="btns">
+        <a class="btn" id="playBtn" href="#" onclick="toggleMusic();return false;">Play Music ▶</a>
+        <a class="btn" id="shareBtn" href="#" onclick="shareSite();return false;">Share Link 🔗</a>
+        <a class="btn" id="downloadBtn" href="#" download="birthday-card.html" onclick="downloadHtml()">Download</a>
+      </div>
+
+      <div class="small">Tip: Image replace karne ke liye <code>src</code> change karein. Music add karne ka option neeche.</div>
+
+      <audio id="music" loop src=""></audio>
+
+      <footer>Made with ❤️ — Send this link to celebrate!</footer>
+    </div>
+  </div>
+
+  <script>
+    // Simple confetti (no external libs)
+    (function(){
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, pieces=[];
+      function resize(){ W=canvas.width=canvas.offsetWidth; H=canvas.height=canvas.offsetHeight; }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function rand(min,max){ return Math.random()*(max-min)+min; }
+      function initPieces(n=80){
+        pieces = [];
+        for(let i=0;i<n;i++){
+          pieces.push({
+            x: rand(0,W),
+            y: rand(-H,0),
+            w: rand(6,12),
+            h: rand(8,14),
+            vx: rand(-0.6,0.6),
+            vy: rand(1,3),
+            rot: rand(0,Math.PI*2),
+            vr: rand(-0.07,0.07),
+            color: ['#ff6b6b','#ffd93d','#6bf0c3','#7aa2ff','#d07bff'][Math.floor(rand(0,5))]
+          })
+        }
+      }
+      function update(){
+        ctx.clearRect(0,0,W,H);
+        for(let p of pieces){
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          ctx.save();
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+          ctx.restore();
+          if(p.y > H + 20) { p.y = rand(-H,0); p.x = rand(0,W); }
+        }
+        requestAnimationFrame(update);
+      }
+      initPieces();
+      update();
+
+      // trigger extra burst
+      window.startConfetti = function(){
+        initPieces(140);
+        setTimeout(()=>initPieces(80),4000);
+      }
+    })();
+
+    // Music controls
+    const music = document.getElementById('music');
+    const playBtn = document.getElementById('playBtn');
+
+    function toggleMusic(){
+      if(!music.src){ // default demo audio (copyright-free short clip)
+        // You can replace this with any direct mp3 link you have.
+        music.src = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b4b3b9c3d.mp3?filename=happy-birthday-11086.mp3";
+      }
+      if(music.paused){ music.play().catch(()=>{}); playBtn.textContent='Pause ⏸'; startConfetti(); }
+      else { music.pause(); playBtn.textContent='Play Music ▶'; }
+    }
+
+    // Share API
+    function shareSite(){
+      const url = location.href;
+      if(navigator.share){
+        navigator.share({title:'Happy Birthday', text:document.getElementById('message').textContent, url});
+      } else {
+        // fallback: copy to clipboard
+        navigator.clipboard?.writeText(url).then(()=>alert('Link copied! Paste to share 🎉'), ()=>prompt('Copy this link:', url));
+      }
+    }
+
+    // Download current page as HTML
+    function downloadHtml(){
+      const html = document.documentElement.outerHTML;
+      const blob = new Blob([html],{type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='birthday-card.html'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+    }
+
+    // Optional: change message dynamically (example)
+    // document.getElementById('message').textContent = "Happy birthday, [Name]!";
+
+  </script>
+</body>
+</html>
